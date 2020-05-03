@@ -25,8 +25,6 @@ passport.use(
     },
     (accessToken, refreshToken, profile, cb) => {
       console.log(chalk.blue(JSON.stringify(profile)));
-      console.log(accessToken);
-
       user = { ...profile };
       return cb(null, profile);
     }
@@ -35,33 +33,53 @@ passport.use(
 
 const app = express();
 app.use(cors());
-
+app.options("*", cors());
 app.use(passport.initialize());
 
 app.get("/auth/github", passport.authenticate("github"));
 app.get(
   "/auth/github/callback",
-  passport.authenticate("github", {
-    successRedirect: "http://localhost:3000/",
-    failureFlash: true,
+  passport.authenticate("github", (req, res) => {
+    res.redirect("/profile");
   })
 );
 
 app.get("/user", (req, res) => {
   console.log("getting user data!");
-  // console.log(user);
+  console.log(user);
+
   res.send(user);
 });
 
-app.get("/repos", (req, res) => {
-  console.log(res);
+const database = {
+  users: [
+    {
+      id: "123",
+      name: "John",
+      email: "john@gmail.com",
+      password: "cookies",
+      joined: new Date(),
+    },
+    {
+      id: "124",
+      name: "Sally",
+      email: "sally@gmail.com",
+      password: "bananas",
+      joined: new Date(),
+    },
+  ],
+};
+
+app.get("/", (req, res) => {
+  console.log("sending users");
+
+  res.send(database.users);
 });
 
 app.get("/auth/logout", (req, res) => {
   console.log("logging out");
-  req.logout();
   user = {};
-  res.redirect("http://localhost:3000/");
+  res.redirect("/");
 });
 
 const PORT = 5000;
